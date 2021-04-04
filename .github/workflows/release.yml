@@ -1,20 +1,26 @@
 on:
   release:
     types: [created]
+  push:
 
 jobs:
   release:
-    name: Release ${{ matrix.target }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-gnu]
+    name: Release binaries
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: Douile/rust-build.action@v0.1.26
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: install
+          args: --path .
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: $HOME/.cargo/bin/umaximize.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "LICENSE"
